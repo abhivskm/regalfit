@@ -1,26 +1,75 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ------------------------------------------------------------------
+   Design tokens
+   ------------------------------------------------------------------ */
+@theme {
+  --color-ivory: #ffffff; /* page background */
+  --color-stone: #f5f5f4; /* image placeholders, alternate sections */
+  --color-ink: #111111; /* text, buttons, dark surfaces */
+  --color-muted: #57534e; /* secondary text — 7.4:1 on white */
+  --color-line: #e7e5e4; /* hairline dividers, card borders */
+  --color-gold: #d6ab62; /* sampled from the logo — accents, or text on dark surfaces */
+  --color-gold-deep: #8a6a2f; /* gold for text on light surfaces — 5:1 on white */
+  --color-sale: #15803d; /* "% OFF" labels — 5:1 on white */
+
+  --ease-gentle: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Font variables are injected by next/font in app/layout.tsx. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------ */
+@layer base {
+  html {
+    /* Keeps anchored sections clear of the sticky header. */
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    @apply bg-ivory font-sans text-ink antialiased;
+  }
+
+  /* Lock page scroll while the mobile menu is open. */
+  html:has([data-menu-open="true"]) {
+    overflow: hidden;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-deep);
+    outline-offset: 3px;
+  }
+
+  .on-dark :focus-visible {
+    outline-color: var(--color-gold);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ------------------------------------------------------------------
+   Motion — subtle, and fully disabled for reduced-motion users
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Scroll-triggered fade/slide (see components/ui/Reveal.tsx). */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(1.25rem);
+    transition:
+      opacity 0.8s var(--ease-gentle),
+      transform 0.8s var(--ease-gentle);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+  }
 }

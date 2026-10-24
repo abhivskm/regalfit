@@ -1,36 +1,195 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Regal Fit — Streetwear & Daily Wear
 
-## Getting Started
+A single-page site for **Regal Fit Men's Wear**, a Bhopal menswear brand for streetwear and daily wear.
+The layout follows Indian e-commerce sites such as Beyoung:
 
-First, run the development server:
+- announcement bar
+- auto-sliding hero banners
+- offer strip
+- "Shop by Category" carousel
+- New Arrivals
+- Combos
+- Winter Rollout
+- a filterable "Shop All" grid
+- reviews
+- trust strip
+- store and contact section
+
+Product cards show the price, the MRP struck through and the % discount. **Buy on WhatsApp** opens a chat with the
+store, pre-filled with the product name and price. There is no cart, payment, backend or database.
+
+Built with Next.js 16 (App Router, Cache Components), TypeScript and Tailwind CSS v4.
+The only runtime dependencies are `next`, `react` and `react-dom`.
+
+---
+
+## Getting started
+
+Requires **Node.js 20.9+** (Node 22 LTS recommended).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000  (use `npm run dev -- --port 3100` if 3000 is taken)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Command         | What it does                         |
+| --------------- | ------------------------------------ |
+| `npm run dev`   | Development server with hot reload   |
+| `npm run build` | Production build (fully static)      |
+| `npm start`     | Serve the production build           |
+| `npm run lint`  | ESLint                               |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy `.env.example` to `.env.local` and set:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `NEXT_PUBLIC_SITE_URL`: the live domain (used for canonical URLs, Open Graph and the sitemap).
+- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`: optional, see [Images and Cloudinary](#images-and-cloudinary).
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Project structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/
+  layout.tsx            Fonts (Poppins + Inter), SEO metadata, skip link
+  page.tsx              Assembles the sections + LocalBusiness structured data (JSON-LD)
+  globals.css           Design tokens (colours, fonts), base styles, motion
+  sitemap.ts, robots.ts Generated /sitemap.xml and /robots.txt
+  icon.png, apple-icon.png, opengraph-image.jpg   Generated from the logo (see below)
+components/
+  AnnouncementBar, Navbar, Hero (slideshow), Offers, Categories, NewArrivals, ProductCard,
+  Combos, Winter, ShopAll (filterable grid), Reviews, Highlights, Contact, ContactForm, Footer
+  ui/                   Button, Container, Icons, Reveal (scroll fade-in), ScrollRow (carousel), SectionHeading
+data/                   ← all editable content lives here
+  site.ts               Brand name, SEO text, announcement messages, nav, contact details, socials
+  hero.ts               Hero slides and the auto-slide interval (3 s)
+  categories.ts         The 8 categories (also the Shop All filter)
+  products.ts           The product catalogue: name, category, price, MRP, image, tags
+  promotions.ts         Offer strip, combo deals, Winter Rollout banner and tiles
+  testimonials.ts       Customer reviews and the four "why Regal Fit" highlights
+  types.ts              Content types (shaped like a CMS schema)
+lib/
+  image-loader.ts       Image loader (Cloudinary / Unsplash / local) + aspect-ratio cropping
+  commerce.ts           Price formatting, discount %, WhatsApp order links
+scripts/generate-brand-assets.mjs   Builds logo, favicon and share image from the source logo
+assets/brand/logo-source.png        Original logo (not served)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Customising
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Products, prices and content
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Everything visitors read is in `/data`. Edit those files and the page updates. No component changes are needed.
+
+- **Add a product:** add an entry to `data/products.ts`.
+  - It needs a unique `id`, a `category` slug, a `price` and an `mrp` in rupees.
+  - Tag it `"new"` to show it in New Arrivals, or `"bestseller"` for the badge.
+  - The discount % is calculated automatically.
+- **Categories:** `data/categories.ts`. Category tiles, the menu and the footer link to `#shop-<slug>`, which opens
+  Shop All already filtered.
+- **Offers, combos and winter promos:** `data/promotions.ts`.
+- **Hero slides:** `data/hero.ts`. Add, remove or reorder slides; change `heroIntervalMs` for the timing.
+  Keep the first slide's photo simple (it is the page's largest image and sets the load time).
+- **WhatsApp number, phone, address, hours, socials:** `data/site.ts` → `contact`, `social`.
+- **Announcement bar:** `data/site.ts` → `announcements`.
+
+### Images and Cloudinary
+
+Images are referenced by URL in `/data`. A custom loader (`lib/image-loader.ts`) asks each image's own CDN
+for the right size and a modern format. `src` can be any of:
+
+| Format | Example |
+| --- | --- |
+| Full Cloudinary URL | `https://res.cloudinary.com/<cloud>/image/upload/v1/regalfit/tee-01.jpg` |
+| Cloudinary public ID | `regalfit/tee-01` (needs `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`) |
+| Unsplash URL | `https://images.unsplash.com/photo-…` (current placeholders) |
+| Local file | `/images/brand/logo-gold.png` (place in `/public`) |
+
+The hero asks the CDN for a wide 2:1 crop on tablet/desktop and a tall 3:5 crop on phones (`withAspect()`), so
+large portrait photos are never downloaded at full height.
+
+**Swapping in real photography:**
+
+1. Create a free Cloudinary account and upload photos (e.g. into a `regalfit/` folder).
+2. Copy each image's URL (or public ID) into the matching `image.src` in `/data`.
+3. Update the `alt` text to describe the new photo.
+
+Recommended shapes:
+
+- **Product, category and combo images:** 3:4 portrait, at least 1000px wide.
+- **Hero slides:** any shape, at least 2400px on the long side, with the subject near the centre.
+
+**Moving to a CMS later:** the `/data` types mirror a typical CMS schema. To let an admin manage products and
+images, connect a headless CMS (e.g. Sanity, Strapi or Payload) with Cloudinary as its media library, then replace
+the imports from `/data` with CMS queries. The components don't need to change.
+
+### Logo, favicon and share image
+
+The logo files in `public/images/brand/`, `app/icon.png`, `app/apple-icon.png` and `app/opengraph-image.jpg`
+are generated from `assets/brand/logo-source.png`:
+
+```bash
+node scripts/generate-brand-assets.mjs
+```
+
+If you replace the source logo (ideally with a high-resolution or vector export from the designer), update the
+crop rows in `REGION` at the top of the script to match the new layout.
+
+### Colours and fonts
+
+Design tokens are at the top of `app/globals.css`:
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `ivory` | `#FFFFFF` | Page background |
+| `stone` | `#F5F5F4` | Alternate sections, image placeholders |
+| `ink` | `#111111` | Text, buttons, dark surfaces |
+| `muted` | `#57534E` | Secondary text |
+| `line` | `#E7E5E4` | Dividers, card borders |
+| `gold` | `#D6AB62` | Sampled from the logo. Accents, or text on dark backgrounds |
+| `gold-deep` | `#8A6A2F` | Gold for text on light backgrounds (meets WCAG AA) |
+| `sale` | `#15803D` | "% OFF" labels (meets WCAG AA) |
+
+Headings use **Poppins** (bold, uppercase) and body text uses **Inter**, both loaded with `next/font` in `app/layout.tsx`.
+
+### Contact form
+
+The form validates in the browser, but **submissions are not sent anywhere yet**. Before launch, connect it in
+`components/ContactForm.tsx` → `handleSubmit`. Either post to a form service such as
+[Formspree](https://formspree.io) or [Web3Forms](https://web3forms.com), or add a Next.js route handler that sends email.
+
+---
+
+## Replace before launch
+
+- [ ] **Products:** names, prices and MRPs in `data/products.ts` are samples.
+- [ ] **Photography:** all product, category, hero and promo images are Unsplash placeholders.
+- [ ] **Offers and combos:** the codes (`REGAL10`), deals and prices in `data/promotions.ts` are samples.
+- [ ] **Claims:** check "320 GSM fleece", the "7-day exchange" and the other highlight text.
+- [ ] **Reviews:** sample quotes in `data/testimonials.ts`. Replace them with real customer words, with permission.
+- [ ] **Logo source:** `assets/brand/logo-source.png` is cropped from a screenshot. Use the original high-res file.
+- [ ] **Email:** `hello@regalfit.com` in `data/site.ts`.
+- [ ] **Opening hours:** `data/site.ts` (placeholder hours).
+- [ ] **Social links:** Instagram and Facebook point to the platforms' home pages (WhatsApp uses the store number).
+- [ ] **Domain:** set `NEXT_PUBLIC_SITE_URL`.
+- [ ] **Contact form:** connect a delivery service (see above).
+
+## Deploying
+
+The site builds to static pages, so it runs on Vercel (zero config), Netlify, or any Node host with `npm run build && npm start`.
+Set the environment variables in your host's dashboard.
+
+## Notes
+
+- **Lighthouse:** desktop scores about 94–98 for performance and 100 for accessibility, best practices and SEO.
+  Mobile performance varies between runs, roughly 78–88, because the placeholder photos come from Unsplash over a
+  simulated slow connection. Your own optimised Cloudinary photos should score at the top of that range.
+- **Hero slideshow:** an auto-rotating hero keeps changing the screen, which lowers Lighthouse's *Speed Index*.
+  A longer `heroIntervalMs` softens this. The slideshow:
+  - pauses on hover
+  - stops when keyboard users tab into it
+  - has a pause button
+  - never auto-plays for visitors who have reduced motion turned on
+- **Inline CSS:** `experimental.inlineCss` is on in `next.config.ts`. It puts the small Tailwind stylesheet in the
+  HTML and removes a render-blocking request. Remove it if a future Next.js version changes the flag.

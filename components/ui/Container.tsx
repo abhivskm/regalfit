@@ -1,0 +1,6 @@
+import type { ReactNode } from "react";
+
+/** Page-width wrapper with slim side gutters (16px mobile, 24px desktop), capped at 1920px. */
+export function Container({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`mx-auto w-full max-w-[1920px] px-4 md:px-6 ${className}`}>{children}</div>;
+}
