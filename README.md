@@ -46,6 +46,39 @@ Copy `.env.example` to `.env.local` and set:
 
 ---
 
+## Admin portal
+
+The client manages the site at **`/admin`** (e.g. https://regalfit.vercel.app/admin). There is no
+redeploy: clicking **Save changes** updates the live website immediately.
+
+| Tab | What the client can do |
+| --- | --- |
+| **Products & prices** | Add or remove products; edit name, category, price, MRP; tick *New* / *Bestseller*; change the photo |
+| **Slides** | Add, remove and reorder home page slides; edit heading, text, button; change the photo |
+| **Combos** | Add or remove combo deals; edit name, price, MRP and photo |
+| **Category photos** | Change the photo on each "Shop by Category" tile |
+
+How it works:
+
+- **Login:** a single password (`ADMIN_PASSWORD`), with a signed, http-only cookie valid for 7 days.
+  Changing the password logs out every device.
+- **Storage:** content and photos live in **Vercel Blob** (store `regalfit-media`).
+  - Each save writes a new JSON version; the newest wins and the last 5 are kept as backups.
+  - Until the first save, the site uses the content in `/data`, so nothing is lost.
+- **Photos:** the browser resizes each upload into 4 widths (480–2400px, WebP) and sends them straight to Blob.
+  The image loader serves the smallest width that fits, so phone photos never slow the site down.
+  Photos that are replaced or removed are deleted from storage on save.
+- **Checks:** everything is validated on the server before saving, with clear messages
+  (e.g. "Product 3: price can't be more than the MRP.").
+- **Kept out of Google:** `/admin` has `noindex` and is disallowed in `robots.txt`.
+
+To change the admin password: Vercel dashboard → Project → Settings → Environment Variables → edit
+`ADMIN_PASSWORD` → redeploy. Locally, set the same variables in `.env.local` (see `.env.example`).
+
+The text sections (announcement bar, offers, Winter Rollout, reviews, contact details) are still edited in `/data`.
+
+---
+
 ## Project structure
 
 ```
@@ -67,8 +100,15 @@ data/                   ← all editable content lives here
   promotions.ts         Offer strip, combo deals, Winter Rollout banner and tiles
   testimonials.ts       Customer reviews and the four "why Regal Fit" highlights
   types.ts              Content types (shaped like a CMS schema)
+app/admin/               Admin portal: login page, editor page, server actions (login, logout, save)
+app/api/admin/upload/    Issues upload tokens for photos (admins only)
+components/admin/        Admin editor UI: tabs, panels, photo upload field
 lib/
-  image-loader.ts       Image loader (Cloudinary / Unsplash / local) + aspect-ratio cropping
+  image-loader.ts       Image loader (Cloudinary / Unsplash / admin uploads / local) + aspect-ratio cropping
+  content.ts            Reads/saves admin-edited content in Vercel Blob, with validation
+  admin-auth.ts         Password check and signed session cookie
+  blob-images.ts        Sizes and URLs of admin-uploaded photos
+  upload-photo.ts       Browser-side resize + upload
   commerce.ts           Price formatting, discount %, WhatsApp order links
 scripts/generate-brand-assets.mjs   Builds logo, favicon and share image from the source logo
 assets/brand/logo-source.png        Original logo (not served)

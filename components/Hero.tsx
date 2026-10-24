@@ -2,7 +2,7 @@
 
 import { getImageProps } from "next/image";
 import { useEffect, useRef, useState, useSyncExternalStore, type FocusEvent, type TouchEvent } from "react";
-import { heroIntervalMs, heroSlides } from "@/data/hero";
+import { heroIntervalMs } from "@/data/hero";
 import { site } from "@/data/site";
 import type { HeroSlide } from "@/data/types";
 import { withAspect } from "@/lib/image-loader";
@@ -67,7 +67,7 @@ const arrowClass =
  * Accessibility: a pause button (WCAG 2.2.2), pauses on hover, stops for good when keyboard focus
  * enters (WAI-ARIA carousel pattern), and never auto-plays for reduced-motion visitors.
  */
-export function Hero() {
+export function Hero({ slides: heroSlides }: { slides: HeroSlide[] }) {
   const count = heroSlides.length;
   const [index, setIndex] = useState(0);
   const [userPaused, setUserPaused] = useState(false);
@@ -132,7 +132,7 @@ export function Hero() {
               key={slide.id}
               role="group"
               aria-roledescription="slide"
-              aria-label={`${i + 1} of ${count}: ${slide.eyebrow}`}
+              aria-label={`${i + 1} of ${count}: ${slide.eyebrow || slide.title}`}
               aria-hidden={!active}
               inert={!active}
               className="relative isolate flex h-[78svh] max-h-[820px] min-h-[520px] w-full shrink-0 items-center"
@@ -149,15 +149,17 @@ export function Hero() {
 
               {/* Copy travels with its slide (no fade), so it is always at full contrast. */}
               <Container className="flex flex-col items-center py-20 text-center">
-                <p className="flex items-center gap-4 text-xs font-semibold uppercase tracking-[0.3em] text-gold">
-                  <span aria-hidden="true" className="h-px w-8 bg-gold md:w-12" />
-                  {slide.eyebrow}
-                  <span aria-hidden="true" className="h-px w-8 bg-gold md:w-12" />
-                </p>
-                <h2 className="mt-5 max-w-4xl font-display text-[clamp(2.75rem,8vw,6rem)] font-extrabold uppercase leading-[0.95] tracking-tight">
+                {slide.eyebrow && (
+                  <p className="mb-5 flex items-center gap-4 text-xs font-semibold uppercase tracking-[0.3em] text-gold">
+                    <span aria-hidden="true" className="h-px w-8 bg-gold md:w-12" />
+                    {slide.eyebrow}
+                    <span aria-hidden="true" className="h-px w-8 bg-gold md:w-12" />
+                  </p>
+                )}
+                <h2 className="max-w-4xl font-display text-[clamp(2.75rem,8vw,6rem)] font-extrabold uppercase leading-[0.95] tracking-tight">
                   {slide.title}
                 </h2>
-                <p className="mt-5 max-w-md text-base leading-relaxed text-ivory/85 md:text-lg">{slide.intro}</p>
+                {slide.intro && <p className="mt-5 max-w-md text-base leading-relaxed text-ivory/85 md:text-lg">{slide.intro}</p>}
                 <ButtonLink href={slide.cta.href} variant="gold" className="mt-8">
                   {slide.cta.label}
                 </ButtonLink>
@@ -202,7 +204,7 @@ export function Hero() {
               className="group px-1.5 py-4"
             >
               <span className="sr-only">
-                Show slide {i + 1}: {slide.eyebrow}
+                Show slide {i + 1}: {slide.eyebrow || slide.title}
               </span>
               <span
                 aria-hidden="true"

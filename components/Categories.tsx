@@ -1,12 +1,13 @@
 import Image from "next/image";
-import { categories, categoriesIntro } from "@/data/categories";
+import { categoriesIntro } from "@/data/categories";
+import type { Category } from "@/data/types";
 import { Container } from "./ui/Container";
 import { Reveal } from "./ui/Reveal";
 import { ScrollRow } from "./ui/ScrollRow";
 import { SectionHeading } from "./ui/SectionHeading";
 
 /** "Shop by Category" carousel. Each tile opens the Shop All grid filtered to that category. */
-export function Categories() {
+export function Categories({ categories }: { categories: Category[] }) {
   return (
     <section id="categories" aria-labelledby="categories-title" className="py-12 md:py-16">
       <Container>

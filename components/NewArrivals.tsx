@@ -1,4 +1,5 @@
-import { newArrivalsIntro, products } from "@/data/products";
+import { newArrivalsIntro } from "@/data/products";
+import type { Product } from "@/data/types";
 import { ProductCard } from "./ProductCard";
 import { ButtonLink } from "./ui/Button";
 import { Container } from "./ui/Container";
@@ -7,8 +8,9 @@ import { ScrollRow } from "./ui/ScrollRow";
 import { SectionHeading } from "./ui/SectionHeading";
 
 /** Carousel of every product tagged "new". */
-export function NewArrivals() {
+export function NewArrivals({ products }: { products: Product[] }) {
   const newProducts = products.filter((p) => p.tags.includes("new"));
+  if (!newProducts.length) return null;
 
   return (
     <section id="new-arrivals" aria-labelledby="new-arrivals-title" className="bg-stone py-12 md:py-16">

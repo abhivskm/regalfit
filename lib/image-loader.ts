@@ -1,4 +1,5 @@
 import type { ImageLoaderProps } from "next/image";
+import { isUploadUrl, uploadVariantUrl } from "./blob-images";
 
 /**
  * Global next/image loader (configured in next.config.ts).
@@ -8,6 +9,7 @@ import type { ImageLoaderProps } from "next/image";
  *   2. A Cloudinary public ID  regalfit/look-01   (needs NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME)
  *   3. An Unsplash URL         https://images.unsplash.com/photo-...   (current placeholders)
  *   4. A local file            /images/brand/logo-gold.png
+ *   5. An admin-portal upload  https://<store>.public.blob.vercel-storage.com/uploads/<id>/2400.webp
  *
  * This keeps the data format CMS-friendly: an admin uploads to Cloudinary and pastes the
  * URL (or the CMS stores the public ID); the loader requests the right size and format.
@@ -16,6 +18,9 @@ const CLOUDINARY_CLOUD = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
 export default function imageLoader({ src, width, quality }: ImageLoaderProps): string {
   const q = quality ?? 75;
+
+  // Admin uploads are stored in several widths; use the smallest that covers the request.
+  if (isUploadUrl(src)) return uploadVariantUrl(src, width);
 
   // Local files in /public are served as-is (the query only satisfies Next's width check).
   if (src.startsWith("/")) return `${src}?w=${width}`;

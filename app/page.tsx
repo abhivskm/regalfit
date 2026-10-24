@@ -12,6 +12,7 @@ import { Reviews } from "@/components/Reviews";
 import { ShopAll } from "@/components/ShopAll";
 import { Winter } from "@/components/Winter";
 import { contact, site, social } from "@/data/site";
+import { getContent } from "@/lib/content";
 
 // Local business structured data, so search engines can show the store's address and phone.
 const jsonLd = {
@@ -34,19 +35,22 @@ const jsonLd = {
   sameAs: social.map((s) => s.href),
 };
 
-export default function Home() {
+export default async function Home() {
+  // Edited in the admin portal; refreshed the moment the admin saves.
+  const content = await getContent();
+
   return (
     <>
       <AnnouncementBar />
       <Navbar />
       <main id="main">
-        <Hero />
+        <Hero slides={content.heroSlides} />
         <Offers />
-        <Categories />
-        <NewArrivals />
-        <Combos />
+        <Categories categories={content.categories} />
+        <NewArrivals products={content.products} />
+        <Combos combos={content.combos} />
         <Winter />
-        <ShopAll />
+        <ShopAll products={content.products} />
         <Reviews />
         <Highlights />
         <Contact />

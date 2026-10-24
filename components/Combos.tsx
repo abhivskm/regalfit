@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { combos, combosIntro } from "@/data/promotions";
+import { combosIntro } from "@/data/promotions";
+import type { Combo } from "@/data/types";
 import { discountPercent, formatPrice, orderLink } from "@/lib/commerce";
 import { Container } from "./ui/Container";
 import { WhatsAppIcon } from "./ui/Icons";
@@ -7,7 +8,8 @@ import { Reveal } from "./ui/Reveal";
 import { SectionHeading } from "./ui/SectionHeading";
 
 /** Value bundles: image card with the deal price and a WhatsApp order button. */
-export function Combos() {
+export function Combos({ combos }: { combos: Combo[] }) {
+  if (!combos.length) return null;
   return (
     <section id="combos" aria-labelledby="combos-title" className="py-12 md:py-16">
       <Container>
