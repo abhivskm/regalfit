@@ -4,7 +4,7 @@ import { categories as seedCategories } from "@/data/categories";
 import { heroSlides as seedSlides } from "@/data/hero";
 import { products as seedProducts } from "@/data/products";
 import { combos as seedCombos } from "@/data/promotions";
-import type { Category, CategorySlug, Combo, HeroSlide, ImageAsset, Product, ProductTag } from "@/data/types";
+import type { Category, Combo, HeroSlide, ImageAsset, Product, ProductTag } from "@/data/types";
 import { uploadVariantUrls } from "./blob-images";
 
 /**
@@ -99,9 +99,8 @@ const imageUrls = (content: SiteContent) => [
 /** A problem the admin can fix; its message is shown in the portal. */
 export class ContentError extends Error {}
 
-const LIMITS = { slides: 10, products: 300, combos: 12 };
+const LIMITS = { slides: 10, products: 300, combos: 12, categories: 24 };
 const TAGS: ProductTag[] = ["new", "bestseller"];
-const SLUGS = seedCategories.map((c) => c.slug);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -178,12 +177,28 @@ export function validateContent(input: unknown): SiteContent {
   });
   if (!heroSlides.length) throw new ContentError("Keep at least one slide.");
 
+  const categories = list(input.categories, "Categories", LIMITS.categories).map((raw, i): Category => {
+    const c = isRecord(raw) ? raw : {};
+    const name = text(c.name, `Category ${i + 1}: name`, { max: 30 });
+    const slug = typeof c.slug === "string" ? c.slug : "";
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) || slug.length > 40) {
+      throw new ContentError(`Category "${name}" has an invalid ID. Please refresh and try again.`);
+    }
+    return { slug, name, image: image(c.image, `${name} category`, name) };
+  });
+  if (!categories.length) throw new ContentError("Keep at least one category.");
+  const slugs = categories.map((c) => c.slug);
+  if (new Set(slugs).size !== slugs.length) throw new ContentError("Two categories have the same ID. Please refresh and try again.");
+  if (new Set(categories.map((c) => c.name.toLowerCase())).size !== categories.length) {
+    throw new ContentError("Two categories have the same name.");
+  }
+
   const products = list(input.products, "Products", LIMITS.products).map((raw, i): Product => {
     const p = isRecord(raw) ? raw : {};
     const label = `Product ${i + 1}`;
     const name = text(p.name, `${label}: name`, { max: 80 });
-    const category = p.category as CategorySlug;
-    if (!SLUGS.includes(category)) throw new ContentError(`${label} (${name}): choose a category.`);
+    const category = typeof p.category === "string" ? p.category : "";
+    if (!slugs.includes(category)) throw new ContentError(`${label} (${name}): choose a category.`);
     const tags = Array.isArray(p.tags) ? TAGS.filter((t) => (p.tags as unknown[]).includes(t)) : [];
     return { id: id(p.id, label), name, category, ...prices(p, `${label} (${name})`), tags, image: image(p.image, `${label} (${name})`, name) };
   });
@@ -199,13 +214,6 @@ export function validateContent(input: unknown): SiteContent {
       ...prices(c, `${label} (${title})`),
       image: image(c.image, `${label} (${title})`, title),
     };
-  });
-
-  // Category names and order are fixed (they power links and filters); only the photo is editable.
-  const stored = Array.isArray(input.categories) ? input.categories.filter(isRecord) : [];
-  const categories = seedCategories.map((seed): Category => {
-    const match = stored.find((c) => c.slug === seed.slug);
-    return { ...seed, image: match ? image(match.image, `${seed.name} category`, seed.name) : seed.image };
   });
 
   const ids = [...heroSlides, ...products, ...combos].map((item) => item.id);

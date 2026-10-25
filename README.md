@@ -56,7 +56,7 @@ redeploy: clicking **Save changes** updates the live website immediately.
 | **Products & prices** | Add or remove products; edit name, category, price, MRP; tick *New* / *Bestseller*; change the photo |
 | **Slides** | Add, remove and reorder home page slides; edit heading, text, button; change the photo |
 | **Combos** | Add or remove combo deals; edit name, price, MRP and photo |
-| **Category photos** | Change the photo on each "Shop by Category" tile |
+| **Categories** | Add, rename, reorder and remove categories; change each category's photo (a category with products can only be removed after its products are moved) |
 
 How it works:
 
@@ -126,8 +126,9 @@ Everything visitors read is in `/data`. Edit those files and the page updates. N
   - It needs a unique `id`, a `category` slug, a `price` and an `mrp` in rupees.
   - Tag it `"new"` to show it in New Arrivals, or `"bestseller"` for the badge.
   - The discount % is calculated automatically.
-- **Categories:** `data/categories.ts`. Category tiles, the menu and the footer link to `#shop-<slug>`, which opens
-  Shop All already filtered.
+- **Categories:** managed in the admin portal (`data/categories.ts` holds the starting list). Category tiles, the menu
+  and the footer link to `#shop-<slug>`, which opens Shop All already filtered. A category's slug is created from its
+  name once and never changes, so renaming keeps links working.
 - **Offers, combos and winter promos:** `data/promotions.ts`.
 - **Hero slides:** `data/hero.ts`. Add, remove or reorder slides; change `heroIntervalMs` for the timing.
   Keep the first slide's photo simple (it is the page's largest image and sets the load time).

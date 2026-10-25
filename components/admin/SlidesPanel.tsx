@@ -1,12 +1,11 @@
 "use client";
 
-import { categories } from "@/data/categories";
-import type { HeroSlide } from "@/data/types";
+import type { Category, HeroSlide } from "@/data/types";
 import { ImageField } from "./ImageField";
 import { moveAt, newId, removeAt, SelectInput, SmallButton, TextInput, type ListUpdater } from "./fields";
 
 /** Where a slide's button can point to: the page's sections (no typing URLs). */
-const LINKS = [
+const linkOptions = (categories: Category[]) => [
   { value: "#new-arrivals", label: "New Arrivals" },
   { value: "#shop", label: "Shop All" },
   ...categories.map((c) => ({ value: `#shop-${c.slug}`, label: `Shop: ${c.name}` })),
@@ -18,7 +17,16 @@ const LINKS = [
 
 const MAX_SLIDES = 10;
 
-export function SlidesPanel({ slides, onChange }: { slides: HeroSlide[]; onChange: ListUpdater<HeroSlide> }) {
+export function SlidesPanel({
+  slides,
+  categories,
+  onChange,
+}: {
+  slides: HeroSlide[];
+  categories: Category[];
+  onChange: ListUpdater<HeroSlide>;
+}) {
+  const LINKS = linkOptions(categories);
   const update = (id: string, patch: (slide: HeroSlide) => Partial<HeroSlide>) =>
     onChange((list) => list.map((s) => (s.id === id ? { ...s, ...patch(s) } : s)));
 

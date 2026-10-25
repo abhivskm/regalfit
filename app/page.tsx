@@ -42,20 +42,20 @@ export default async function Home() {
   return (
     <>
       <AnnouncementBar />
-      <Navbar />
+      <Navbar categories={content.categories} />
       <main id="main">
         <Hero slides={content.heroSlides} />
         <Offers />
         <Categories categories={content.categories} />
-        <NewArrivals products={content.products} />
+        <NewArrivals products={content.products} categories={content.categories} />
         <Combos combos={content.combos} />
         <Winter />
-        <ShopAll products={content.products} />
+        <ShopAll products={content.products} categories={content.categories} />
         <Reviews />
         <Highlights />
         <Contact />
       </main>
-      <Footer />
+      <Footer categories={content.categories} />
       <script
         type="application/ld+json"
         // Escape "<" so content can never close the script tag early.

@@ -1,15 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { categories } from "@/data/categories";
-import type { CategorySlug, Product, ProductTag } from "@/data/types";
+import type { Category, CategorySlug, Product, ProductTag } from "@/data/types";
 import { discountPercent } from "@/lib/commerce";
 import { ImageField } from "./ImageField";
 import { Checkbox, newId, PriceInput, SelectInput, SmallButton, TextInput, type ListUpdater } from "./fields";
 
-const CATEGORY_OPTIONS = categories.map((c) => ({ value: c.slug, label: c.name }));
-
-export function ProductsPanel({ products, onChange }: { products: Product[]; onChange: ListUpdater<Product> }) {
+export function ProductsPanel({
+  products,
+  categories,
+  onChange,
+}: {
+  products: Product[];
+  categories: Category[];
+  onChange: ListUpdater<Product>;
+}) {
+  const CATEGORY_OPTIONS = categories.map((c) => ({ value: c.slug, label: c.name }));
   const [filter, setFilter] = useState<"all" | CategorySlug>("all");
   const [query, setQuery] = useState("");
 
@@ -28,7 +34,7 @@ export function ProductsPanel({ products, onChange }: { products: Product[]; onC
       {
         id: newId(),
         name: "",
-        category: filter === "all" ? "oversized-tees" : filter,
+        category: filter === "all" ? (categories[0]?.slug ?? "") : filter,
         price: 0,
         mrp: 0,
         tags: ["new"],

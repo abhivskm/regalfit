@@ -1,4 +1,4 @@
-import type { Category, CategorySlug } from "./types";
+import type { Category } from "./types";
 
 export const categoriesIntro = {
   eyebrow: "Quick Shop",
@@ -6,7 +6,7 @@ export const categoriesIntro = {
   description: "Find your fit in seconds.",
 };
 
-/** Categories, in display order. Used by the category carousel and the "Shop All" filter. */
+/** Starting categories, in display order. The admin portal can add, rename, reorder and remove them. */
 export const categories: Category[] = [
   {
     slug: "oversized-tees",
@@ -73,5 +73,3 @@ export const categories: Category[] = [
     },
   },
 ];
-
-export const categoryName = (slug: CategorySlug) => categories.find((c) => c.slug === slug)?.name ?? "";

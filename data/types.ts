@@ -14,15 +14,8 @@ export type NavLink = {
   href: string;
 };
 
-export type CategorySlug =
-  | "oversized-tees"
-  | "shirts"
-  | "hoodies"
-  | "sweatshirts"
-  | "joggers-cargos"
-  | "jeans"
-  | "polos"
-  | "jackets";
+/** URL-safe category id, e.g. "oversized-tees". Created from the name and never changed afterwards. */
+export type CategorySlug = string;
 
 /** A product category. Its slug powers the "Shop All" filter and `#shop-<slug>` links. */
 export type Category = {

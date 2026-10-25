@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { categories } from "@/data/categories";
 import { aboutText, contact, nav, site, social } from "@/data/site";
+import type { Category } from "@/data/types";
 import { ContactIcons } from "./ui/ContactIcons";
 import { Container } from "./ui/Container";
 import { socialIcons } from "./ui/Icons";
@@ -14,7 +14,7 @@ async function CurrentYear() {
 const headingClass = "font-display text-xs font-bold uppercase tracking-[0.2em] text-gold";
 const linkClass = "transition-colors hover:text-gold";
 
-export function Footer() {
+export function Footer({ categories }: { categories: Category[] }) {
   return (
     <footer className="on-dark bg-ink text-sm text-ivory/70">
       <Container className="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr] lg:py-16">

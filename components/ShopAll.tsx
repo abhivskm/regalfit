@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { categories } from "@/data/categories";
 import { shopIntro } from "@/data/products";
-import type { CategorySlug, Product } from "@/data/types";
+import type { Category, CategorySlug, Product } from "@/data/types";
 import { ProductCard } from "./ProductCard";
 import { Container } from "./ui/Container";
 import { SectionHeading } from "./ui/SectionHeading";
@@ -11,24 +10,24 @@ import { SectionHeading } from "./ui/SectionHeading";
 type Filter = "all" | CategorySlug;
 
 const HASH_PREFIX = "#shop-";
-const isCategory = (value: string): value is CategorySlug => categories.some((c) => c.slug === value);
 
 /**
  * Full product grid with category tabs. Category links elsewhere on the page point to
  * `#shop-<slug>`; this section listens for that hash and applies the matching filter.
  */
-export function ShopAll({ products }: { products: Product[] }) {
+export function ShopAll({ products, categories }: { products: Product[]; categories: Category[] }) {
+  const label = (slug: string) => categories.find((c) => c.slug === slug)?.name ?? "";
   const [filter, setFilter] = useState<Filter>("all");
   const visible = filter === "all" ? products : products.filter((p) => p.category === filter);
 
   useEffect(() => {
     const onHashChange = () => {
       const slug = window.location.hash.slice(HASH_PREFIX.length);
-      if (window.location.hash.startsWith(HASH_PREFIX) && isCategory(slug)) setFilter(slug);
+      if (window.location.hash.startsWith(HASH_PREFIX) && categories.some((c) => c.slug === slug)) setFilter(slug);
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
+  }, [categories]);
 
   const chooseFilter = (next: Filter) => {
     setFilter(next);
@@ -85,7 +84,7 @@ export function ShopAll({ products }: { products: Product[] }) {
         <ul className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-5 lg:grid-cols-4">
           {visible.map((product) => (
             <li key={product.id}>
-              <ProductCard product={product} />
+              <ProductCard product={product} categoryLabel={label(product.category)} />
             </li>
           ))}
         </ul>

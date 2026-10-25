@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { categoryName } from "@/data/categories";
 import type { Product } from "@/data/types";
 import { discountPercent, formatPrice, orderLink } from "@/lib/commerce";
 import { WhatsAppIcon } from "./ui/Icons";
@@ -8,6 +7,8 @@ const badgeLabel = { new: "New", bestseller: "Bestseller" } as const;
 
 type ProductCardProps = {
   product: Product;
+  /** Display name of the product's category. */
+  categoryLabel: string;
   /** Passed to next/image `sizes`; defaults suit a 2 / 3 / 4-column grid. */
   sizes?: string;
 };
@@ -15,6 +16,7 @@ type ProductCardProps = {
 /** Product tile: photo, badge, name, price with MRP and discount, and a WhatsApp order button. */
 export function ProductCard({
   product,
+  categoryLabel,
   sizes = "(min-width: 1024px) 24vw, (min-width: 768px) 32vw, 48vw",
 }: ProductCardProps) {
   const off = discountPercent(product.price, product.mrp);
@@ -38,7 +40,7 @@ export function ProductCard({
       </div>
 
       <div className="mt-3 flex flex-1 flex-col">
-        <p className="text-[11px] uppercase tracking-wider text-muted">{categoryName(product.category)}</p>
+        <p className="text-[11px] uppercase tracking-wider text-muted">{categoryLabel}</p>
         <h3 className="mt-0.5 line-clamp-2 text-sm font-medium leading-snug text-ink">{product.name}</h3>
         <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2">
           <span className="font-display text-base font-bold">{formatPrice(product.price)}</span>

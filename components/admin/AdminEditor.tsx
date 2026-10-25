@@ -15,7 +15,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "products", label: "Products & prices" },
   { id: "slides", label: "Slides" },
   { id: "combos", label: "Combos" },
-  { id: "categories", label: "Category photos" },
+  { id: "categories", label: "Categories" },
 ];
 
 type Status = { tone: "success" | "error"; message: string } | null;
@@ -116,10 +116,10 @@ export function AdminEditor({ initialContent, storageReady }: { initialContent: 
             Photo storage is not connected, so changes can&apos;t be saved yet. Connect a Vercel Blob store to this project.
           </p>
         )}
-        {tab === "products" && <ProductsPanel products={content.products} onChange={edit("products")} />}
-        {tab === "slides" && <SlidesPanel slides={content.heroSlides} onChange={edit("heroSlides")} />}
+        {tab === "products" && <ProductsPanel products={content.products} categories={content.categories} onChange={edit("products")} />}
+        {tab === "slides" && <SlidesPanel slides={content.heroSlides} categories={content.categories} onChange={edit("heroSlides")} />}
         {tab === "combos" && <CombosPanel combos={content.combos} onChange={edit("combos")} />}
-        {tab === "categories" && <CategoriesPanel categories={content.categories} onChange={edit("categories")} />}
+        {tab === "categories" && <CategoriesPanel categories={content.categories} products={content.products} onChange={edit("categories")} />}
       </main>
 
       {/* Save bar: always visible, highlighted when there are unsaved changes. */}

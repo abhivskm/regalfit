@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { categories } from "@/data/categories";
 import { contact, nav, site } from "@/data/site";
+import type { Category } from "@/data/types";
 import { whatsappLink } from "@/lib/commerce";
 import { ContactIcons } from "./ui/ContactIcons";
 import { CloseIcon, MenuIcon, PhoneIcon, WhatsAppIcon } from "./ui/Icons";
@@ -23,7 +23,7 @@ function Logo({ onClick }: { onClick?: () => void }) {
 }
 
 /** Sticky white header: logo, shop links, WhatsApp and call shortcuts; full-screen menu on mobile. */
-export function Navbar() {
+export function Navbar({ categories }: { categories: Category[] }) {
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
