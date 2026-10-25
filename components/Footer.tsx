@@ -91,7 +91,25 @@ export function Footer() {
           <p>
             &copy; <CurrentYear /> {site.name} {site.descriptor}. All rights reserved.
           </p>
-          <p>Made in Bhopal.</p>
+          <p className="flex items-center gap-2">
+            Made in Bhopal.
+            {/* Looks like a brand mark; quietly opens the admin login (which is still password-protected). */}
+            <a
+              href="/admin/login"
+              rel="nofollow"
+              aria-label="Staff login"
+              className="opacity-60 transition-opacity hover:opacity-100"
+            >
+              <Image
+                src="/images/brand/monogram-gold.png"
+                alt=""
+                width={74}
+                height={80}
+                unoptimized
+                className="h-5 w-auto"
+              />
+            </a>
+          </p>
         </Container>
       </div>
     </footer>
