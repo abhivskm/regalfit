@@ -63,6 +63,9 @@ export function ShopAll({ products, categories }: { products: Product[]; categor
                 type="button"
                 aria-pressed={active}
                 onClick={() => chooseFilter(value)}
+                data-track={value === "all" ? undefined : "category"}
+                data-track-item={value === "all" ? undefined : value}
+                data-track-label={value === "all" ? undefined : label}
                 className={`shrink-0 rounded-full border px-4 py-2 font-display text-xs font-semibold uppercase tracking-wide transition-colors duration-300 ${
                   active ? "border-ink bg-ink text-ivory" : "border-line bg-ivory text-ink hover:border-ink"
                 }`}

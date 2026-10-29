@@ -160,7 +160,14 @@ export function Hero({ slides: heroSlides }: { slides: HeroSlide[] }) {
                   {slide.title}
                 </h2>
                 {slide.intro && <p className="mt-5 max-w-md text-base leading-relaxed text-ivory/85 md:text-lg">{slide.intro}</p>}
-                <ButtonLink href={slide.cta.href} variant="gold" className="mt-8">
+                <ButtonLink
+                  href={slide.cta.href}
+                  variant="gold"
+                  className="mt-8"
+                  data-track="slide"
+                  data-track-item={slide.id}
+                  data-track-label={slide.title}
+                >
                   {slide.cta.label}
                 </ButtonLink>
               </Container>

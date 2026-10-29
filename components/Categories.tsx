@@ -21,7 +21,13 @@ export function Categories({ categories }: { categories: Category[] }) {
                 key={category.slug}
                 className="w-[38%] shrink-0 snap-start sm:w-[27%] md:w-[20%] lg:w-[calc((100%-6.25rem)/6)]"
               >
-                <a href={`#shop-${category.slug}`} className="group block text-center">
+                <a
+                  href={`#shop-${category.slug}`}
+                  className="group block text-center"
+                  data-track="category"
+                  data-track-item={category.slug}
+                  data-track-label={category.name}
+                >
                   <div className="relative aspect-3/4 overflow-hidden rounded-lg bg-stone">
                     <Image
                       src={category.image.src}

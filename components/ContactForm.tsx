@@ -1,57 +1,63 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import Link from "next/link";
+import { useRef, useState, useTransition, type ChangeEvent, type FormEvent } from "react";
+import { submitEnquiry } from "@/app/actions";
+import {
+  validateEnquiry,
+  type EnquiryErrors,
+  type EnquiryField,
+  type EnquiryValues,
+} from "@/lib/enquiry-rules";
+import { getVisitIds } from "@/lib/tracker-client";
 import { buttonClasses } from "./ui/Button";
 
-type Field = "name" | "email" | "message";
-type Values = Record<Field, string>;
-type Errors = Partial<Record<Field, string>>;
+const EMPTY: EnquiryValues = { name: "", email: "", phone: "", message: "" };
 
-const EMPTY: Values = { name: "", email: "", message: "" };
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-function validate(values: Values): Errors {
-  const errors: Errors = {};
-  if (values.name.trim().length < 2) errors.name = "Please enter your name.";
-  if (!EMAIL_PATTERN.test(values.email.trim())) errors.email = "Please enter a valid email address.";
-  if (values.message.trim().length < 10) errors.message = "Please write a message of at least 10 characters.";
-  return errors;
-}
-
-/**
- * Enquiry form with front-end validation only.
- * NOTE: submissions are not sent anywhere yet. To receive them, post `values` to a form
- * service (e.g. Formspree, Web3Forms) or your own API inside `handleSubmit`; see the README.
- */
+/** Enquiry form. Checks fields in the browser, then saves the message for the admin "Tracking" page. */
 export function ContactForm() {
-  const [values, setValues] = useState<Values>(EMPTY);
-  const [errors, setErrors] = useState<Errors>({});
+  const [values, setValues] = useState<EnquiryValues>(EMPTY);
+  const [errors, setErrors] = useState<EnquiryErrors>({});
   const [attempted, setAttempted] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [failure, setFailure] = useState("");
+  const [sending, startSending] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
+
+  const focusFirst = (found: EnquiryErrors) => {
+    const first = (Object.keys(found) as EnquiryField[])[0];
+    if (first) formRef.current?.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
+  };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const next = { ...values, [e.target.name]: e.target.value };
     setValues(next);
     // After the first submit, re-validate as the visitor types so errors clear promptly.
-    if (attempted) setErrors(validate(next));
+    if (attempted) setErrors(validateEnquiry(next));
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const found = validate(values);
+    const found = validateEnquiry(values);
     setErrors(found);
     setAttempted(true);
+    setFailure("");
+    if (Object.keys(found).length) return focusFirst(found);
 
-    const firstInvalid = (Object.keys(found) as Field[])[0];
-    if (firstInvalid) {
-      formRef.current?.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)?.focus();
-      return;
-    }
-
-    setSentTo(values.name.trim().split(" ")[0]);
-    setValues(EMPTY);
-    setAttempted(false);
+    startSending(async () => {
+      const { visitor, session, source } = getVisitIds();
+      const result = await submitEnquiry(values, { visitor, session, source });
+      if (result.ok) {
+        setSentTo(values.name.trim().split(" ")[0]);
+        setValues(EMPTY);
+        setAttempted(false);
+      } else if (result.errors) {
+        setErrors(result.errors);
+        focusFirst(result.errors);
+      } else {
+        setFailure(result.message ?? "Sorry, something went wrong. Please try again.");
+      }
+    });
   };
 
   if (sentTo) {
@@ -69,12 +75,18 @@ export function ContactForm() {
     );
   }
 
-  const fieldClass = (field: Field) =>
+  const fieldClass = (field: EnquiryField) =>
     `mt-2 block w-full rounded-md border bg-ivory px-4 py-3.5 text-base text-ink placeholder:text-muted/70 transition-colors ${
       errors[field] ? "border-red-700" : "border-line hover:border-ink/40"
     }`;
-
-  const describedBy = (field: Field) => (errors[field] ? `${field}-error` : undefined);
+  const describedBy = (field: EnquiryField, hint?: string) =>
+    [errors[field] ? `${field}-error` : null, hint].filter(Boolean).join(" ") || undefined;
+  const errorText = (field: EnquiryField) =>
+    errors[field] && (
+      <p id={`${field}-error`} className="mt-2 text-sm text-red-700">
+        {errors[field]}
+      </p>
+    );
 
   return (
     <form
@@ -85,7 +97,7 @@ export function ContactForm() {
       className="rounded-lg bg-ivory p-6 md:p-10"
     >
       <h3 className="font-display text-xl font-bold uppercase md:text-2xl">Send us a note</h3>
-      <p className="mt-2 text-sm text-muted">All fields are required.</p>
+      <p className="mt-2 text-sm text-muted">Phone number is optional; everything else is required.</p>
 
       <div className="mt-8 space-y-6">
         <div>
@@ -97,40 +109,56 @@ export function ContactForm() {
             name="name"
             type="text"
             autoComplete="name"
+            maxLength={80}
             value={values.name}
             onChange={handleChange}
             aria-invalid={!!errors.name}
             aria-describedby={describedBy("name")}
             className={fieldClass("name")}
           />
-          {errors.name && (
-            <p id="name-error" className="mt-2 text-sm text-red-700">
-              {errors.name}
-            </p>
-          )}
+          {errorText("name")}
         </div>
 
-        <div>
-          <label htmlFor="email" className="text-sm font-medium">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            inputMode="email"
-            value={values.email}
-            onChange={handleChange}
-            aria-invalid={!!errors.email}
-            aria-describedby={describedBy("email")}
-            className={fieldClass("email")}
-          />
-          {errors.email && (
-            <p id="email-error" className="mt-2 text-sm text-red-700">
-              {errors.email}
-            </p>
-          )}
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div>
+            <label htmlFor="email" className="text-sm font-medium">
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              maxLength={120}
+              value={values.email}
+              onChange={handleChange}
+              aria-invalid={!!errors.email}
+              aria-describedby={describedBy("email")}
+              className={fieldClass("email")}
+            />
+            {errorText("email")}
+          </div>
+          <div>
+            <label htmlFor="phone" className="text-sm font-medium">
+              Phone <span className="font-normal text-muted">(optional)</span>
+            </label>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              maxLength={20}
+              value={values.phone}
+              onChange={handleChange}
+              placeholder="So we can reply on WhatsApp"
+              aria-invalid={!!errors.phone}
+              aria-describedby={describedBy("phone")}
+              className={fieldClass("phone")}
+            />
+            {errorText("phone")}
+          </div>
         </div>
 
         <div>
@@ -141,6 +169,7 @@ export function ContactForm() {
             id="message"
             name="message"
             rows={5}
+            maxLength={2000}
             value={values.message}
             onChange={handleChange}
             placeholder="A size question, a stock check, a bulk order..."
@@ -148,17 +177,26 @@ export function ContactForm() {
             aria-describedby={describedBy("message")}
             className={`${fieldClass("message")} resize-y`}
           />
-          {errors.message && (
-            <p id="message-error" className="mt-2 text-sm text-red-700">
-              {errors.message}
-            </p>
-          )}
+          {errorText("message")}
         </div>
       </div>
 
-      <button type="submit" className={buttonClasses("solid", "mt-8 w-full sm:w-auto")}>
-        Send message
+      {failure && (
+        <p role="alert" className="mt-6 text-sm text-red-700">
+          {failure}
+        </p>
+      )}
+
+      <button type="submit" disabled={sending} className={buttonClasses("solid", "mt-8 w-full sm:w-auto disabled:opacity-60")}>
+        {sending ? "Sending…" : "Send message"}
       </button>
+      <p className="mt-4 text-xs leading-relaxed text-muted">
+        We use your details only to reply to you. See our{" "}
+        <Link href="/privacy" className="underline underline-offset-2 hover:text-ink">
+          Privacy Policy
+        </Link>
+        .
+      </p>
     </form>
   );
 }

@@ -79,6 +79,35 @@ The text sections (announcement bar, offers, Winter Rollout, reviews, contact de
 
 ---
 
+## Visitor tracking (admin → Tracking)
+
+`/admin/tracking` shows, for Today / Last 7 days / Last 30 days:
+
+- **Live now:** visitors active in the last 2 minutes (refreshes every 15 s).
+- **Visits and visitors** (new vs returning), **WhatsApp clicks, call clicks, enquiries.**
+- **Visits per day** (or per hour for Today).
+- **Products:** how often each product was seen on screen, its "Buy on WhatsApp" taps, and the conversion %.
+  Products seen 20+ times with no enquiries are flagged.
+- **Where visitors came from** (Instagram, Google, WhatsApp, direct…), **cities**, **devices**, and clicks on
+  **categories, combos and slides**.
+- **Live activity feed**, and **contact-form enquiries** (mark New / Contacted / Done, download as CSV).
+
+How it works:
+
+- **No login for customers.** `components/Tracker.tsx` keeps a random ID in the browser (new vs returning visitors),
+  batches events and sends them to `/api/track`. No cookies, no stored IP addresses, no third parties.
+- Elements are tracked with attributes: `data-track="whatsapp" data-track-item="<id>" data-track-label="<name>"` for
+  clicks, and `data-track-view="product"` for "seen on screen".
+- Bots, link previews and the logged-in admin are not counted.
+- **Campaign links:** add `?src=<name>` to any link you share, e.g. `https://regalfit.vercel.app/?src=insta-bio` or
+  `?src=store-qr`. The dashboard then shows which post, bio link or QR code brought each visitor (first link of a visit wins).
+- Data lives in **Neon Postgres** (Vercel Marketplace, free plan, `DATABASE_URL`). Detailed events are kept 90 days, then
+  folded into `daily_stats`. Create or update the tables with `node --env-file=.env.local scripts/db-setup.mjs`.
+- The contact form saves enquiries (phone optional) and links to the **Privacy Policy** page (`/privacy`).
+- Server functions run in Singapore (`vercel.json`), next to the database.
+
+---
+
 ## Project structure
 
 ```
@@ -101,9 +130,19 @@ data/                   ← all editable content lives here
   testimonials.ts       Customer reviews and the four "why Regal Fit" highlights
   types.ts              Content types (shaped like a CMS schema)
 app/admin/               Admin portal: login page, editor page, server actions (login, logout, save)
+app/admin/tracking/      Tracking dashboard (visits, products, sources, live feed, enquiries)
+app/api/track/           Receives visitor activity from the browser
 app/api/admin/upload/    Issues upload tokens for photos (admins only)
-components/admin/        Admin editor UI: tabs, panels, photo upload field
+app/api/admin/enquiries/ Enquiries CSV download (admins only)
+app/privacy/             Privacy Policy page
+components/admin/        Admin UI: top bar, editor tabs and panels, photo upload field, tracking dashboard
+components/Tracker.tsx   Invisible visitor tracking on the public page
 lib/
+  analytics.ts          Tracking writes and dashboard queries (Postgres)
+  tracker-client.ts     Browser IDs and traffic-source detection
+  visit.ts              Device, location headers and bot filtering
+  db.ts                 Neon Postgres connection
+  enquiry-rules.ts      Contact-form validation (shared by browser and server)
   image-loader.ts       Image loader (Cloudinary / Unsplash / admin uploads / local) + aspect-ratio cropping
   content.ts            Reads/saves admin-edited content in Vercel Blob, with validation
   admin-auth.ts         Password check and signed session cookie

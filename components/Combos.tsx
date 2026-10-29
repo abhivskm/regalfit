@@ -47,6 +47,9 @@ export function Combos({ combos }: { combos: Combo[] }) {
                     </p>
                     <a
                       href={orderLink(`${combo.title} combo`, combo.price)}
+                      data-track="combo"
+                      data-track-item={combo.id}
+                      data-track-label={combo.title}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-4 inline-flex items-center justify-center gap-2 rounded-md bg-ivory py-2.5 font-display text-[11px] font-semibold uppercase tracking-wider text-ink transition-colors hover:bg-gold"

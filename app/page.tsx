@@ -10,6 +10,7 @@ import { NewArrivals } from "@/components/NewArrivals";
 import { Offers } from "@/components/Offers";
 import { Reviews } from "@/components/Reviews";
 import { ShopAll } from "@/components/ShopAll";
+import { Tracker } from "@/components/Tracker";
 import { Winter } from "@/components/Winter";
 import { contact, site, social } from "@/data/site";
 import { getContent } from "@/lib/content";
@@ -56,6 +57,7 @@ export default async function Home() {
         <Contact />
       </main>
       <Footer categories={content.categories} />
+      <Tracker />
       <script
         type="application/ld+json"
         // Escape "<" so content can never close the script tag early.

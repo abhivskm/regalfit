@@ -21,6 +21,7 @@ export function Contact() {
 
           <a
             href={whatsappLink("Hi Regal Fit! I'd like to know what's in stock.")}
+            data-track="whatsapp_general"
             target="_blank"
             rel="noopener noreferrer"
             className={buttonClasses("solid", "mt-8")}
@@ -41,6 +42,7 @@ export function Contact() {
                 </address>
                 <a
                   href={contact.mapUrl}
+                  data-track="directions"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-2 inline-flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-wider text-ink underline decoration-gold decoration-2 underline-offset-[6px] hover:text-gold-deep"

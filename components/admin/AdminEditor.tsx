@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { logout, saveContent } from "@/app/admin/actions";
+import { saveContent } from "@/app/admin/actions";
 import type { SiteContent } from "@/lib/content";
+import { AdminTopBar } from "./AdminTopBar";
 import { CategoriesPanel } from "./CategoriesPanel";
 import { CombosPanel } from "./CombosPanel";
 import { UploadTracker } from "./fields";
@@ -76,23 +76,7 @@ export function AdminEditor({ initialContent, storageReady }: { initialContent: 
   return (
     <UploadTracker.Provider value={tracker}>
       <header className="sticky top-0 z-40 border-b border-line bg-ivory">
-        <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 md:px-6">
-          <Image src="/images/brand/monogram-gold.png" alt="" width={74} height={80} unoptimized className="h-8 w-auto" />
-          <span className="font-display text-sm font-bold uppercase tracking-wide">Regal Fit Admin</span>
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-auto text-xs font-semibold underline-offset-4 hover:underline"
-          >
-            View website ↗
-          </a>
-          <form action={logout}>
-            <button type="submit" className="rounded-md border border-line px-3 py-2 text-xs font-semibold hover:border-ink">
-              Log out
-            </button>
-          </form>
-        </div>
+        <AdminTopBar active="edit" />
         <nav aria-label="Admin sections" className="mx-auto flex max-w-[1600px] gap-1 overflow-x-auto px-4 scrollbar-none md:px-6 [&::-webkit-scrollbar]:hidden">
           {TABS.map((t) => (
             <button

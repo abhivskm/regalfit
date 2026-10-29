@@ -53,7 +53,13 @@ export function Footer({ categories }: { categories: Category[] }) {
           <ul className="mt-4 space-y-2.5">
             {categories.map((c) => (
               <li key={c.slug}>
-                <a href={`#shop-${c.slug}`} className={linkClass}>
+                <a
+                  href={`#shop-${c.slug}`}
+                  className={linkClass}
+                  data-track="category"
+                  data-track-item={c.slug}
+                  data-track-label={c.name}
+                >
                   {c.name}
                 </a>
               </li>
@@ -89,7 +95,10 @@ export function Footer({ categories }: { categories: Category[] }) {
       <div className="border-t border-ivory/10">
         <Container className="flex flex-col gap-2 py-5 text-xs sm:flex-row sm:items-center sm:justify-between">
           <p>
-            &copy; <CurrentYear /> {site.name} {site.descriptor}. All rights reserved.
+            &copy; <CurrentYear /> {site.name} {site.descriptor}. All rights reserved.{" "}
+            <a href="/privacy" className={`underline underline-offset-2 ${linkClass}`}>
+              Privacy Policy
+            </a>
           </p>
           <p className="flex items-center gap-2">
             Made in Bhopal.

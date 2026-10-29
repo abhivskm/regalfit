@@ -76,12 +76,13 @@ export function Navbar({ categories }: { categories: Category[] }) {
         </ul>
 
         <div className="ml-auto flex items-center gap-1 lg:ml-6">
-          <a href={contact.phoneHref} className={iconButton}>
+          <a href={contact.phoneHref} className={iconButton} data-track="call">
             <span className="sr-only">Call the store</span>
             <PhoneIcon />
           </a>
           <a
             href={whatsappLink("Hi Regal Fit! I have a question.")}
+            data-track="whatsapp_general"
             target="_blank"
             rel="noopener noreferrer"
             className="ml-1 hidden items-center gap-2 rounded-md bg-ink px-4 py-2.5 font-display text-xs font-semibold uppercase tracking-widest text-ivory transition-colors hover:bg-gold hover:text-ink sm:inline-flex"
@@ -90,6 +91,7 @@ export function Navbar({ categories }: { categories: Category[] }) {
           </a>
           <a
             href={whatsappLink("Hi Regal Fit! I have a question.")}
+            data-track="whatsapp_general"
             target="_blank"
             rel="noopener noreferrer"
             className={`${iconButton} sm:hidden`}
@@ -130,6 +132,9 @@ export function Navbar({ categories }: { categories: Category[] }) {
               <li key={c.slug}>
                 <a
                   href={`#shop-${c.slug}`}
+                  data-track="category"
+                  data-track-item={c.slug}
+                  data-track-label={c.name}
                   onClick={close}
                   className="block rounded-md bg-stone px-3 py-3 text-sm font-medium"
                 >

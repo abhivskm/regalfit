@@ -16,7 +16,7 @@ export function ContactIcons({ tone = "light", className = "" }: { tone?: "light
   return (
     <ul className={`flex gap-3 ${className}`} aria-label="Contact the store">
       <li>
-        <a href={contact.phoneHref} className={button}>
+        <a href={contact.phoneHref} className={button} data-track="call">
           <PhoneIcon />
           <span className="sr-only">Call the store</span>
         </a>
@@ -24,6 +24,7 @@ export function ContactIcons({ tone = "light", className = "" }: { tone?: "light
       <li>
         <a
           href={whatsappLink("Hi Regal Fit! I have a question.")}
+          data-track="whatsapp_general"
           target="_blank"
           rel="noopener noreferrer"
           className={button}

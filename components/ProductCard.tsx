@@ -23,7 +23,12 @@ export function ProductCard({
   const badge = product.tags[0];
 
   return (
-    <article className="group flex h-full flex-col">
+    <article
+      className="group flex h-full flex-col"
+      data-track-view="product"
+      data-track-item={product.id}
+      data-track-label={product.name}
+    >
       <div className="relative aspect-3/4 overflow-hidden rounded-lg bg-stone">
         <Image
           src={product.image.src}
@@ -54,6 +59,9 @@ export function ProductCard({
         <div className="mt-auto pt-3">
           <a
             href={orderLink(product.name, product.price)}
+            data-track="whatsapp"
+            data-track-item={product.id}
+            data-track-label={product.name}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 rounded-md border border-ink py-2.5 font-display text-[11px] font-semibold uppercase tracking-wider transition-colors hover:bg-ink hover:text-ivory"
