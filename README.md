@@ -83,7 +83,7 @@ The text sections (announcement bar, offers, Winter Rollout, reviews, contact de
 
 `/admin/tracking` shows, for Today / Last 7 days / Last 30 days:
 
-- **Live now:** visitors active in the last 2 minutes (refreshes every 15 s).
+- **Live now:** visitors active in the last minute. The whole page refreshes every 5 s while it is open.
 - **Visits and visitors** (new vs returning), **WhatsApp clicks, call clicks, enquiries.**
 - **Visits per day** (or per hour for Today).
 - **Products:** how often each product was seen on screen, its "Buy on WhatsApp" taps, and the conversion %.

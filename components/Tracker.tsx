@@ -6,8 +6,8 @@ import { getVisitIds, markSeenOnce } from "@/lib/tracker-client";
 type QueuedEvent = { type: string; item?: string; label?: string };
 
 const ENDPOINT = "/api/track";
-const FLUSH_MS = 4000;
-const HEARTBEAT_MS = 30_000;
+const FLUSH_MS = 2000;
+const HEARTBEAT_MS = 20_000;
 
 /**
  * Invisible visitor tracking. Renders nothing.
@@ -22,9 +22,9 @@ export function Tracker() {
     let queue: QueuedEvent[] = [];
     let sentFirst = false;
 
-    const send = (events: QueuedEvent[]) => {
+    const send = (events: QueuedEvent[], left = false) => {
       // isNew is reported once, with the first pageview of a brand-new visitor.
-      const body = JSON.stringify({ v: ids.visitor, s: ids.session, src: ids.source, n: ids.isNew && !sentFirst, e: events });
+      const body = JSON.stringify({ v: ids.visitor, s: ids.session, src: ids.source, n: ids.isNew && !sentFirst, e: events, x: left });
       sentFirst = true;
       try {
         if (navigator.sendBeacon?.(ENDPOINT, new Blob([body], { type: "text/plain" }))) return;
@@ -81,9 +81,11 @@ export function Tracker() {
     const heartbeat = window.setInterval(() => {
       if (document.visibilityState === "visible" && !queue.length) send([]);
     }, HEARTBEAT_MS);
-    const onHide = () => document.visibilityState === "hidden" && flush();
-    document.addEventListener("visibilitychange", onHide);
-    window.addEventListener("pagehide", flush);
+    // Leaving the tab drops the visitor from "live now" at once; coming back restores them.
+    const leave = () => send(queue.splice(0, 30), true);
+    const onVisibility = () => (document.visibilityState === "hidden" ? leave() : send([]));
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", leave);
 
     return () => {
       flush();
@@ -92,8 +94,8 @@ export function Tracker() {
       mutations.disconnect();
       window.clearInterval(flushTimer);
       window.clearInterval(heartbeat);
-      document.removeEventListener("visibilitychange", onHide);
-      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", leave);
     };
   }, []);
 

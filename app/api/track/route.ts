@@ -39,7 +39,7 @@ export async function POST(request: Request): Promise<Response> {
     }));
 
   try {
-    await recordEvents(visit, events);
+    await recordEvents(visit, events, body.x === true);
   } catch (error) {
     console.error("Tracking write failed:", error);
   }

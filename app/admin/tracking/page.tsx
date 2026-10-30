@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { TrackingDashboard } from "@/components/admin/TrackingDashboard";
 import { isAdmin } from "@/lib/admin-auth";
-import { compactOldData, getDashboard, getLiveData, listEnquiries, RANGES, type Range } from "@/lib/analytics";
+import { compactOldData, getTrackingSnapshot, RANGES, type Range } from "@/lib/analytics";
 import { readContent } from "@/lib/content";
 import { dbConfigured } from "@/lib/db";
 
@@ -28,21 +28,8 @@ async function TrackingGate({ searchParams }: { searchParams: PageProps<"/admin/
   const range: Range = RANGES.some((r) => r.value === requested) ? (requested as Range) : "7d";
 
   await compactOldData();
-  const [dashboard, live, enquiries, content] = await Promise.all([
-    getDashboard(range),
-    getLiveData(),
-    listEnquiries(),
-    readContent(),
-  ]);
+  const [snapshot, content] = await Promise.all([getTrackingSnapshot(range), readContent()]);
 
-  // Show every current product (even with no activity yet), plus removed ones that still have data.
-  const stats = new Map(dashboard.products.map((p) => [p.id, p]));
-  const products = [
-    ...content.products.map((p) => ({ id: p.id, label: p.name, views: 0, whatsapp: 0, ...stats.get(p.id), current: true })),
-    ...dashboard.products
-      .filter((p) => !content.products.some((c) => c.id === p.id))
-      .map((p) => ({ ...p, current: false })),
-  ].map((p) => ({ ...p, label: content.products.find((c) => c.id === p.id)?.name ?? p.label }));
-
-  return <TrackingDashboard dashboard={{ ...dashboard, products }} initialLive={live} enquiries={enquiries} />;
+  // Numbers refresh on their own in the browser; the key starts fresh when the range changes.
+  return <TrackingDashboard key={range} initial={snapshot} catalog={content.products.map((p) => ({ id: p.id, name: p.name }))} />;
 }

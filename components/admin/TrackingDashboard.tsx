@@ -1,20 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
-import { fetchLiveData, setEnquiryStatus } from "@/app/admin/tracking/actions";
-import type { Dashboard, Enquiry, EnquiryStatus, LiveData } from "@/lib/analytics";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { setEnquiryStatus } from "@/app/admin/tracking/actions";
+import type { EnquiryStatus, TrackingSnapshot } from "@/lib/analytics";
 import { RANGES } from "@/lib/analytics-ranges";
 import { AdminTopBar } from "./AdminTopBar";
 
-type ProductRow = { id: string; label: string; views: number; whatsapp: number; current: boolean };
 type Props = {
-  dashboard: Omit<Dashboard, "products"> & { products: ProductRow[] };
-  initialLive: LiveData;
-  enquiries: Enquiry[];
+  initial: TrackingSnapshot;
+  catalog: { id: string; name: string }[];
 };
 
-const LIVE_POLL_MS = 15_000;
+const POLL_MS = 5000;
 
 const EVENT_TEXT: Record<string, string> = {
   pageview: "Visited the website",
@@ -102,35 +100,66 @@ function BarList({ rows, empty = "No data yet." }: { rows: { key: string; count:
 
 /* ---------- the page ---------- */
 
-export function TrackingDashboard({ dashboard, initialLive, enquiries: initialEnquiries }: Props) {
-  const [live, setLive] = useState(initialLive);
+export function TrackingDashboard({ initial, catalog }: Props) {
+  const [snapshot, setSnapshot] = useState(initial);
   const [updatedAt, setUpdatedAt] = useState(() => new Date());
-  const [enquiries, setEnquiries] = useState(initialEnquiries);
+  const [offline, setOffline] = useState(false);
+  const statusVersion = useRef(0);
   const [productSort, setProductSort] = useState<"whatsapp" | "views">("whatsapp");
   const [, startTransition] = useTransition();
-  const { totals } = dashboard;
+  const { dashboard, live, enquiries } = snapshot;
+  const { totals, range } = dashboard;
 
-  // Live numbers refresh on their own while this page is open.
+  // The whole page refreshes on its own while it is open and on screen.
   useEffect(() => {
-    const timer = window.setInterval(async () => {
-      if (document.visibilityState !== "visible") return;
-      const next = await fetchLiveData();
-      if (next) {
-        setLive(next);
+    const controller = new AbortController();
+    let polling = false;
+    const poll = async () => {
+      if (polling || document.visibilityState !== "visible") return;
+      polling = true;
+      const version = statusVersion.current;
+      try {
+        const response = await fetch(`/api/admin/tracking?range=${range}`, { cache: "no-store", signal: controller.signal });
+        if (!response.ok) throw new Error(`Tracking refresh failed: ${response.status}`);
+        const next: TrackingSnapshot = await response.json();
+        // A status changed while this was loading: keep what the admin just picked.
+        const keepEnquiries = statusVersion.current !== version;
+        setSnapshot((current) => (keepEnquiries ? { ...next, enquiries: current.enquiries } : next));
         setUpdatedAt(new Date());
+        setOffline(false);
+      } catch {
+        if (!controller.signal.aborted) setOffline(true);
+      } finally {
+        polling = false;
       }
-    }, LIVE_POLL_MS);
-    return () => window.clearInterval(timer);
-  }, []);
+    };
+    const timer = window.setInterval(poll, POLL_MS);
+    document.addEventListener("visibilitychange", poll);
+    return () => {
+      controller.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", poll);
+    };
+  }, [range]);
 
   const changeStatus = (id: number, status: EnquiryStatus) => {
-    setEnquiries((list) => list.map((e) => (e.id === id ? { ...e, status } : e)));
+    statusVersion.current += 1;
+    setSnapshot((current) => ({
+      ...current,
+      enquiries: current.enquiries.map((e) => (e.id === id ? { ...e, status } : e)),
+    }));
     startTransition(async () => {
       await setEnquiryStatus(id, status);
+      statusVersion.current += 1;
     });
   };
 
-  const products = [...dashboard.products].sort((a, b) => b[productSort] - a[productSort] || b.views - a.views);
+  // Show every current product (even with no activity yet), plus removed ones that still have data.
+  const stats = new Map(dashboard.products.map((p) => [p.id, p]));
+  const products = [
+    ...catalog.map((c) => ({ views: 0, whatsapp: 0, ...stats.get(c.id), id: c.id, label: c.name, current: true })),
+    ...dashboard.products.filter((p) => !catalog.some((c) => c.id === p.id)).map((p) => ({ ...p, current: false })),
+  ].sort((a, b) => b[productSort] - a[productSort] || b.views - a.views);
   const maxVisits = Math.max(1, ...dashboard.series.map((s) => s.visits));
   const newCount = enquiries.filter((e) => e.status === "new").length;
 
@@ -177,7 +206,9 @@ export function TrackingDashboard({ dashboard, initialLive, enquiries: initialEn
               {live.liveDevices.map((d) => `${d.count} ${d.key}`).join(" · ") || "No one right now"}
             </p>
             <p className="mt-2 text-[11px] text-ivory/50" suppressHydrationWarning>
-              Updated {updatedAt.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })} · every 15 s
+              {offline ? "Connection problem, retrying · last updated " : "Updated "}
+              {updatedAt.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })}
+              {offline ? "" : " · every 5 s"}
             </p>
           </div>
           <Stat label="Visits" value={totals.visits} />

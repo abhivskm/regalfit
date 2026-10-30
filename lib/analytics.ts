@@ -40,7 +40,7 @@ const RETENTION_DAYS = 90;
    Writing
    ------------------------------------------------------------------ */
 
-export async function recordEvents(visit: Visit, events: TrackedEvent[]): Promise<void> {
+export async function recordEvents(visit: Visit, events: TrackedEvent[], left = false): Promise<void> {
   const db = sql();
   const queries = [];
   if (events.length) {
@@ -53,11 +53,15 @@ export async function recordEvents(visit: Visit, events: TrackedEvent[]): Promis
                   ${events.map((e) => e.item ?? null)}::text[],
                   ${events.map((e) => e.label ?? null)}::text[]) AS e(type, item, label)`);
   }
-  // Heartbeat for the "live now" counter.
-  queries.push(db`
+  // Heartbeat for the "live now" counter (a visitor who just left drops off at once).
+  queries.push(
+    left
+      ? db`DELETE FROM presence WHERE visitor = ${visit.visitor}`
+      : db`
     INSERT INTO presence (visitor, last_seen, device, source)
     VALUES (${visit.visitor}, now(), ${visit.device}, ${visit.source})
-    ON CONFLICT (visitor) DO UPDATE SET last_seen = now(), device = EXCLUDED.device, source = EXCLUDED.source`);
+    ON CONFLICT (visitor) DO UPDATE SET last_seen = now(), device = EXCLUDED.device, source = EXCLUDED.source`,
+  );
   await db.transaction(queries);
 }
 
@@ -247,12 +251,12 @@ export type LiveData = {
   }[];
 };
 
-/** Visitors seen in the last 2 minutes, plus the latest activity (polled every few seconds). */
+/** Visitors seen in the last minute, plus the latest activity (polled every few seconds). */
 export async function getLiveData(): Promise<LiveData> {
   const db = sql();
   const [live, recent] = await db.transaction([
     db`SELECT coalesce(device, 'unknown') AS key, count(*) AS count FROM presence
-       WHERE last_seen > now() - interval '2 minutes' GROUP BY 1 ORDER BY 2 DESC`,
+       WHERE last_seen > now() - interval '1 minute' GROUP BY 1 ORDER BY 2 DESC`,
     db`SELECT ts, type, label, device, source, city FROM events
        WHERE type <> 'product_view' ORDER BY ts DESC LIMIT 40`,
   ]);
@@ -269,6 +273,14 @@ export async function getLiveData(): Promise<LiveData> {
       city: r.city,
     })),
   };
+}
+
+export type TrackingSnapshot = { dashboard: Dashboard; live: LiveData; enquiries: Enquiry[] };
+
+/** Everything the tracking page shows that changes while it is open. */
+export async function getTrackingSnapshot(range: Range): Promise<TrackingSnapshot> {
+  const [dashboard, live, enquiries] = await Promise.all([getDashboard(range), getLiveData(), listEnquiries()]);
+  return { dashboard, live, enquiries };
 }
 
 /**
